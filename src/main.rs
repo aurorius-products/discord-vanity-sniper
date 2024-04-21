@@ -1,12 +1,6 @@
-#[macro_use] extern crate lazy_static;
 use anyhow::{Ok, Result};
-use regex::Regex;
 use std::{fs::File, io::{Read, Write}, path::Path, process};
 use serde::{Deserialize, Serialize};
-
-lazy_static! {
-    static ref RE: Regex = Regex::new(r#"og:description" content="([^"]*)""#).expect("Invalid regex");
-}
 
 #[derive(Serialize, Deserialize)]
 struct Config {
@@ -97,6 +91,8 @@ async fn run(vanity: &str, discord_token: &str, discord_id: &str) -> Result<()> 
             if success {
                 println!("Successfully claimed discord.gg/{}", vanity);
                 process::exit(0)
+            } else {
+                tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
             }
         }
         println!("Checked discord.gg/{}", vanity.to_string());
