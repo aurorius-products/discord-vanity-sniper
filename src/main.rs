@@ -23,14 +23,14 @@ struct SetVanity {
 
 
 async fn is_vanity_taken(client: &reqwest::Client, vanity: &str) -> Result<bool> {
-
     let body = client.get(format!("https://discord.com/invite/{}", vanity))
+    .header("Cache-Control", "no-cache")
         .send()
         .await?
         .text()
         .await?;
 
-    if body.len() >= 6000 {
+    if body.len() >= 9000 {
         return Ok(true)
     }
 
