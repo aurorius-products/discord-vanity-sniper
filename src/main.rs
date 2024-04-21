@@ -1,7 +1,7 @@
 #[macro_use] extern crate lazy_static;
 use anyhow::{Ok, Result};
 use regex::Regex;
-use std::{fs::File, io::{Read, Write}, path::Path};
+use std::{fs::File, io::{Read, Write}, path::Path, process};
 use serde::{Deserialize, Serialize};
 
 lazy_static! {
@@ -37,19 +37,11 @@ async fn is_vanity_taken(client: &reqwest::Client, vanity: &str) -> Result<bool>
         .text()
         .await?;
 
-    match RE.captures(body.as_str()) {
-        Some(captures) => {
-            let description = format!("{}", captures.get(1).map_or("", |m| m.as_str()));
-            if description.starts_with("Discord is the easiest way") {
-                return Ok(false)
-            }
-            return Ok(true)
-        },
-        None => {
-            println!("Couldn't find metadata for {}. Response: {}", vanity, body);
-            return Ok(true)
-        }
+    if body.len() >= 6000 {
+        return Ok(true)
     }
+
+    Ok(false)
 }
 
 async fn set_vanity(vanity: &str, discord_token: &str, discord_id: &str) -> Result<bool> {
@@ -107,8 +99,12 @@ async fn run(vanity: &str, discord_token: &str, discord_id: &str) -> Result<()> 
         .build()?;
 
     loop {
-        if !is_vanity_taken(&client, vanity).await? {
-            set_vanity(vanity, discord_token, discord_id).await?;
+        if !(is_vanity_taken(&client, vanity).await?) {
+            let success = set_vanity(vanity, discord_token, discord_id).await?;
+            if success {
+                println!("Successfully claimed discord.gg/{}", vanity);
+                process::exit(0)
+            }
         }
         println!("Checked discord.gg/{}", vanity.to_string());
     }
