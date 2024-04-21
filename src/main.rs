@@ -21,13 +21,6 @@ struct SetVanity {
     code: String
 }
 
-#[derive(Serialize, Deserialize)]
-struct SetVanityResponse {
-    code: Option<u16>,
-    message: Option<String>,
-
-}
-
 
 async fn is_vanity_taken(client: &reqwest::Client, vanity: &str) -> Result<bool> {
 
